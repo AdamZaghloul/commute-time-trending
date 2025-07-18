@@ -16,11 +16,34 @@ func main() {
 		return
 	}
 
-	dur, err := getCommuteTime("45+Spruce+St+Aurora+ON+L4G+1R9", "43.8316105,-79.3561524", apiKey)
+	possibilities, target, err := getLocations()
 	if err != nil {
-		fmt.Printf("Error getting commute time: %v\n", err)
+		fmt.Printf("Error getting locations: %v\n", err)
 		return
 	}
 
-	fmt.Println(dur)
+	for i := 0; i < len(possibilities); i++ {
+
+		//get each way and store to print
+		dur, err := getCommuteTime(possibilities[i], target, apiKey)
+		if err != nil {
+			fmt.Printf("Error getting commute time: %v\n", err)
+			return
+		}
+
+		fmt.Println(dur)
+
+		//get each way and store to print
+		dur, err = getCommuteTime(target, possibilities[i], apiKey)
+		if err != nil {
+			fmt.Printf("Error getting commute time: %v\n", err)
+			return
+		}
+
+		fmt.Println(dur)
+	}
+}
+
+func getLocations() (possibilities []string, target string, err error) {
+
 }
