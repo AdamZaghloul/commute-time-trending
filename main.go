@@ -22,5 +22,5 @@ func main() {
 		return
 	}
 
-	fmt.Println(float64((dur + 30) / 60))
+	fmt.Println(dur)
 }

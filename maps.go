@@ -112,5 +112,5 @@ func getCommuteTime(from, to, key string) (int, error) {
 		return 0, err
 	}
 
-	return route.Routes[0].Legs[0].Duration.Value, nil
+	return (route.Routes[0].Legs[0].Duration.Value + 30) / 60, nil
 }
