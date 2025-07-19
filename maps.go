@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -86,6 +87,7 @@ func getCommuteTime(from, to, key string) (int, error) {
 
 	url := "https://maps.googleapis.com/maps/api/directions/json?origin=" + from + "&destination=" + to + "&key=" + key
 	route := Route{}
+	fmt.Println(url)
 
 	client := &http.Client{
 		Timeout: 5 * time.Second,
