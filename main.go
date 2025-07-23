@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,8 +13,9 @@ import (
 )
 
 type RoundTrip struct {
-	to   int
-	from int
+	location string
+	to       int
+	from     int
 }
 
 func main() {
@@ -21,54 +23,51 @@ func main() {
 
 	apiKey := os.Getenv("MAPS_API_KEY")
 	if apiKey == "" {
-		fmt.Println("error: no maps api key defined")
+		logMessage("error: no maps api key defined")
 		return
 	}
 
 	target := os.Getenv("TARGET")
 	if apiKey == "" {
-		fmt.Println("error: no target defined")
+		logMessage("error: no target defined")
 		return
 	}
 
 	locations, err := getLocations()
 	if err != nil {
-		fmt.Printf("Error getting locations: %v\n", err)
+		logMessage(fmt.Sprintf("Error getting locations: %v\n", err))
 		return
 	}
 
-	for location := range locations {
+	for i, trip := range locations {
 
-		//get each way and store to print
-		to, err := getCommuteTime(location, target, apiKey)
+		to, err := getCommuteTime(trip.location, target, apiKey)
 		if err != nil {
-			fmt.Printf("Error getting commute time: %v\n", err)
-			return
+			logMessage(fmt.Sprintf("Error getting commute time from %v to %v: %v\n", trip.location, target, err))
 		}
 
-		//get each way and store to print
-		from, err := getCommuteTime(target, location, apiKey)
+		from, err := getCommuteTime(target, trip.location, apiKey)
 		if err != nil {
-			fmt.Printf("Error getting commute time: %v\n", err)
-			return
+			logMessage(fmt.Sprintf("Error getting commute time from %v to %v: %v\n", target, trip.location, err))
 		}
 
-		locations[location] = RoundTrip{
-			to:   to,
-			from: from,
+		locations[i] = RoundTrip{
+			location: trip.location,
+			to:       to,
+			from:     from,
 		}
-
-		fmt.Println(fmt.Printf("Location: %s, To Target: %v, From Target: %v", location, to, from))
 	}
 
 	err = outputTimes(locations)
 	if err != nil {
-		fmt.Printf("Error getting commute time: %v\n", err)
+		fmt.Printf("Error outputting commute times: %v\n", err)
 		return
 	}
+
+	logMessage("Output successful.")
 }
 
-func getLocations() (locations map[string]RoundTrip, err error) {
+func getLocations() (locations []RoundTrip, err error) {
 
 	locByte, err := os.ReadFile("locations.txt")
 	if err != nil {
@@ -77,24 +76,24 @@ func getLocations() (locations map[string]RoundTrip, err error) {
 
 	locArray := strings.Split(string(locByte), "\n")
 
-	locations = make(map[string]RoundTrip)
+	locations = []RoundTrip{}
 
 	for i := 0; i < len(locArray); i++ {
-		locations[locArray[i]] = RoundTrip{}
+		locations = append(locations, RoundTrip{
+			location: locArray[i],
+		})
 	}
-
-	fmt.Println(locations)
 
 	return
 }
 
-func outputTimes(locations map[string]RoundTrip) error {
+func outputTimes(locations []RoundTrip) error {
 	toRow := []string{time.Now().String()}
 	fromRow := []string{time.Now().String()}
 
-	for location := range locations {
-		toRow = append(toRow, string(locations[location].to))
-		fromRow = append(fromRow, string(locations[location].from))
+	for _, trip := range locations {
+		toRow = append(toRow, strconv.Itoa(trip.to))
+		fromRow = append(fromRow, strconv.Itoa(trip.from))
 	}
 
 	err := writeFile(toRow, "to-target-times.csv")

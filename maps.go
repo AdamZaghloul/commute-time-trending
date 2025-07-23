@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -36,6 +35,10 @@ type Route struct {
 				Text  string `json:"text"`
 				Value int    `json:"value"`
 			} `json:"duration"`
+			DurationInTraffic struct {
+				Text  string `json:"text"`
+				Value int    `json:"value"`
+			} `json:"duration_in_traffic"`
 			EndAddress  string `json:"end_address"`
 			EndLocation struct {
 				Lat float64 `json:"lat"`
@@ -85,9 +88,8 @@ type Route struct {
 
 func getCommuteTime(from, to, key string) (int, error) {
 
-	url := "https://maps.googleapis.com/maps/api/directions/json?origin=" + from + "&destination=" + to + "&key=" + key
+	url := "https://maps.googleapis.com/maps/api/directions/json?origin=" + from + "&destination=" + to + "&key=" + key + "&departure_time=now"
 	route := Route{}
-	fmt.Println(url)
 
 	client := &http.Client{
 		Timeout: 5 * time.Second,
@@ -114,5 +116,5 @@ func getCommuteTime(from, to, key string) (int, error) {
 		return 0, err
 	}
 
-	return (route.Routes[0].Legs[0].Duration.Value + 30) / 60, nil
+	return (route.Routes[0].Legs[0].DurationInTraffic.Value + 30) / 60, nil
 }
