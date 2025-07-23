@@ -21,21 +21,45 @@ type RoundTrip struct {
 func main() {
 	godotenv.Load()
 
+	logFilePath := os.Getenv("LOG_FILE_PATH")
+	if logFilePath == "" {
+		fmt.Println("error: no log file path defined")
+		return
+	}
+
 	apiKey := os.Getenv("MAPS_API_KEY")
 	if apiKey == "" {
-		logMessage("error: no maps api key defined")
+		logMessage("error: no maps api key defined", logFilePath)
 		return
 	}
 
 	target := os.Getenv("TARGET")
 	if apiKey == "" {
-		logMessage("error: no target defined")
+		logMessage("error: no target defined", logFilePath)
 		return
 	}
 
-	locations, err := getLocations()
+	locationsFilePath := os.Getenv("LOCATIONS_FILE_PATH")
+	if locationsFilePath == "" {
+		logMessage("error: no locations file path defined", logFilePath)
+		return
+	}
+
+	toFilePath := os.Getenv("TO_FILE_PATH")
+	if toFilePath == "" {
+		logMessage("error: no to file path defined", logFilePath)
+		return
+	}
+
+	fromFilePath := os.Getenv("FROM_FILE_PATH")
+	if fromFilePath == "" {
+		logMessage("error: no from file path defined", logFilePath)
+		return
+	}
+
+	locations, err := getLocations(locationsFilePath)
 	if err != nil {
-		logMessage(fmt.Sprintf("Error getting locations: %v\n", err))
+		logMessage(fmt.Sprintf("Error getting locations: %v\n", err), logFilePath)
 		return
 	}
 
@@ -43,12 +67,12 @@ func main() {
 
 		to, err := getCommuteTime(trip.location, target, apiKey)
 		if err != nil {
-			logMessage(fmt.Sprintf("Error getting commute time from %v to %v: %v\n", trip.location, target, err))
+			logMessage(fmt.Sprintf("Error getting commute time from %v to %v: %v\n", trip.location, target, err), logFilePath)
 		}
 
 		from, err := getCommuteTime(target, trip.location, apiKey)
 		if err != nil {
-			logMessage(fmt.Sprintf("Error getting commute time from %v to %v: %v\n", target, trip.location, err))
+			logMessage(fmt.Sprintf("Error getting commute time from %v to %v: %v\n", target, trip.location, err), logFilePath)
 		}
 
 		locations[i] = RoundTrip{
@@ -58,18 +82,18 @@ func main() {
 		}
 	}
 
-	err = outputTimes(locations)
+	err = outputTimes(locations, toFilePath, fromFilePath)
 	if err != nil {
 		fmt.Printf("Error outputting commute times: %v\n", err)
 		return
 	}
 
-	logMessage("Output successful.")
+	logMessage("Output successful.", logFilePath)
 }
 
-func getLocations() (locations []RoundTrip, err error) {
+func getLocations(locationsFilePath string) (locations []RoundTrip, err error) {
 
-	locByte, err := os.ReadFile("locations.txt")
+	locByte, err := os.ReadFile(locationsFilePath)
 	if err != nil {
 		log.Fatalf("Error reading file: %v", err)
 	}
@@ -87,7 +111,7 @@ func getLocations() (locations []RoundTrip, err error) {
 	return
 }
 
-func outputTimes(locations []RoundTrip) error {
+func outputTimes(locations []RoundTrip, toFilePath, fromFilePath string) error {
 	toRow := []string{time.Now().String()}
 	fromRow := []string{time.Now().String()}
 
@@ -96,12 +120,12 @@ func outputTimes(locations []RoundTrip) error {
 		fromRow = append(fromRow, strconv.Itoa(trip.from))
 	}
 
-	err := writeFile(toRow, "to-target-times.csv")
+	err := writeFile(toRow, toFilePath)
 	if err != nil {
 		return err
 	}
 
-	err = writeFile(fromRow, "from-target-times.csv")
+	err = writeFile(fromRow, fromFilePath)
 	if err != nil {
 		return err
 	}
