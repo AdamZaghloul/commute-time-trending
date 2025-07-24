@@ -98,7 +98,7 @@ func getLocations(locationsFilePath string) (locations []RoundTrip, err error) {
 		log.Fatalf("Error reading file: %v", err)
 	}
 
-	locArray := strings.Split(string(locByte), "\n")
+	locArray := strings.Split(strings.TrimSpace(string(locByte)), "\n")
 
 	locations = []RoundTrip{}
 
